@@ -285,6 +285,8 @@
         const DB_NAME = 'ChatDB';
         const STORE_NAME = 'messages';
         let db;
+        // 追蹤已顯示的消息ID，防止重複顯示
+        const displayedMessageIds = new Set();
 
         // 初始化 IndexedDB
         function initDatabase() {
@@ -333,6 +335,7 @@
                 const store = transaction.objectStore(STORE_NAME);
                 store.clear();
                 document.getElementById('chatMessages').innerHTML = '';
+                displayedMessageIds.clear();
                 clearMediaPanel();
             }
         }
@@ -349,6 +352,7 @@
             const urls = text.match(urlRegex);
             
             const message = {
+                messageId: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                 type: 'text',
                 content: text,
                 urls: urls || [],
@@ -372,6 +376,7 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const message = {
+                        messageId: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                         type: 'image',
                         content: event.target.result,
                         timestamp: new Date(),
@@ -393,6 +398,7 @@
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     const message = {
+                        messageId: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                         type: 'video',
                         content: event.target.result,
                         name: file.name,
@@ -411,6 +417,12 @@
 
         // 顯示消息
         function displayMessage(message, scroll = false) {
+            // 檢查消息是否已經顯示過，防止重複
+            if (displayedMessageIds.has(message.messageId)) {
+                return;
+            }
+            displayedMessageIds.add(message.messageId);
+            
             const messagesDiv = document.getElementById('chatMessages');
             const messageEl = document.createElement('div');
             messageEl.className = `message ${message.own ? 'own' : 'other'}`;
