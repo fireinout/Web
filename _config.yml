@@ -1,1 +1,11 @@
+title: Google Search
+description: A simple Google search webpage
 theme: jekyll-theme-minimal
+github: [metadata]
+
+# GitHub Pages settings
+exclude:
+  - .git
+  - .gitignore
+  - Gemfile
+  - Gemfile.lock
