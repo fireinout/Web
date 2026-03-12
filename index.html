@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google 搜尋</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .search-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #dd4b39;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        .search-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        #searchInput {
+            flex: 1;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+        }
+
+        #searchInput:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            background-color: #dd4b39;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #c23321;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .description {
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .results-container {
+            margin-top: 30px;
+            max-height: 500px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .result-item {
+            background: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .result-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-title {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+
+        .result-title:hover {
+            text-decoration: underline;
+        }
+
+        .result-snippet {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .result-source {
+            color: #999;
+            font-size: 12px;
+            margin-top: 8px;
+            word-break: break-all;
+        }
+
+        .result-source a {
+            color: #6c5ce7;
+            text-decoration: none;
+        }
+
+        .result-source a:hover {
+            text-decoration: underline;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #999;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <h1>Google 搜尋</h1>
+        <div class="search-input-group">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="輸入搜尋內容..."
+                autocomplete="off"
+            >
+            <button onclick="googleSearch()">搜尋</button>
+        </div>
+        <p class="description">在輸入框中輸入搜尋內容，然後點擊搜尋或按 Enter 鍵</p>
+        
+        <div class="results-container" id="resultsContainer"></div>
+    </div>
+
+    <script>
+        function googleSearch() {
+            const searchQuery = document.getElementById('searchInput').value.trim();
+            if (searchQuery) {
+                displaySearchResults(searchQuery);
+            } else {
+                alert('請輸入搜尋內容');
+            }
+        }
+
+        function displaySearchResults(query) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            resultsContainer.innerHTML = '<div class="loading">搜尋中...</div>';
+
+            // 使用 Wikipedia API 获取搜索结果
+            fetch(`https://zh.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&srinfo=totalhits&srprop=snippet&srlimit=5&format=json&origin=*`)
+                .then(response => response.json())
+                .then(data => {
+                    const results = data.query.search;
+                    if (results.length > 0) {
+                        let resultsHTML = '';
+                        results.forEach(result => {
+                            const sourceUrl = `https://zh.wikipedia.org/wiki/${encodeURIComponent(result.title)}`;
+                            resultsHTML += `
+                                <div class="result-item">
+                                    <div class="result-title" onclick="openWikipedia('${result.title}')">${result.title}</div>
+                                    <div class="result-source">來源: <a href="${sourceUrl}" target="_blank">維基百科</a></div>
+                                </div>
+                            `;
+                        });
+                        resultsContainer.innerHTML = resultsHTML;
+                    } else {
+                        resultsContainer.innerHTML = '<div class="no-results">未找到相關結果</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('錯誤:', error);
+                    resultsContainer.innerHTML = '<div class="no-results">搜尋失敗，請重試</div>';
+                });
+        }
+
+        function openWikipedia(title) {
+            window.open(`https://zh.wikipedia.org/wiki/${encodeURIComponent(title)}`, '_blank');
+        }
+
+        // 支持按 Enter 鍵搜尋
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                googleSearch();
+            }
+        });
+
+        // 頁面加載時自動焦點到輸入框
+        document.getElementById('searchInput').focus();
+    </script>
+</body>
+</html>
