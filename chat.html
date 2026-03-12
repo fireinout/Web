@@ -417,9 +417,13 @@
             }
             displayedMessageIds.add(message.messageId);
             
+            // 確保消息沒有 own 屬性，強制左對齊
+            delete message.own;
+            
             const messagesDiv = document.getElementById('chatMessages');
             const messageEl = document.createElement('div');
             messageEl.className = `message other`;
+            messageEl.style.textAlign = 'left';
             
             let html = '';
             
@@ -530,6 +534,8 @@
             const channel = new BroadcastChannel('chat_channel');
             channel.onmessage = (event) => {
                 const message = event.data;
+                // 確保消息不包含 own 屬性，強制使用左對齊
+                message.own = false;
                 displayMessage(message, true);
             };
         } catch (e) {
