@@ -94,20 +94,15 @@
             margin-top: 5px;
         }
 
-        .message-image {
-            max-width: 200px;
-            border-radius: 8px;
-            margin-top: 5px;
-        }
-
-        .message-video-link {
+        .text-link {
             color: #667eea;
-            text-decoration: none;
+            text-decoration: underline;
             cursor: pointer;
+            word-break: break-all;
         }
 
-        .message-video-link:hover {
-            text-decoration: underline;
+        .text-link:hover {
+            color: #764ba2;
         }
 
         /* 聊天輸入區 */
@@ -423,18 +418,16 @@
             let html = '';
             
             if (message.type === 'text') {
-                const content = escapeHtml(message.content);
+                // 將URL轉換為可點擊的鏈接
+                let content = escapeHtml(message.content);
+                const urlRegex = /(https?:\/\/[^\s]+)/g;
+                content = content.replace(urlRegex, (url) => {
+                    return `<a href="#" class="text-link" onclick="previewUrl('${url.replace(/'/g, "\\'")}'); return false;">${url}</a>`;
+                });
                 html = `
                     <div class="message-content">${content}</div>
                     <div class="message-time">${formatTime(new Date(message.timestamp))}</div>
                 `;
-                
-                // 自動預覽文本中的URL
-                if (message.urls && message.urls.length > 0) {
-                    setTimeout(() => {
-                        previewUrl(message.urls[0]);
-                    }, 100);
-                }
             } else if (message.type === 'image') {
                 html = `
                     <div class="message-content">
