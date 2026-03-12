@@ -356,8 +356,7 @@
                 type: 'text',
                 content: text,
                 urls: urls || [],
-                timestamp: new Date(),
-                own: true
+                timestamp: new Date()
             };
             
             saveMessage(message);
@@ -378,8 +377,7 @@
                         messageId: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                         type: 'image',
                         content: event.target.result,
-                        timestamp: new Date(),
-                        own: true
+                        timestamp: new Date()
                     };
                     saveMessage(message);
                     previewImage(event.target.result);
@@ -400,8 +398,7 @@
                         type: 'video',
                         content: event.target.result,
                         name: file.name,
-                        timestamp: new Date(),
-                        own: true
+                        timestamp: new Date()
                     };
                     saveMessage(message);
                     previewVideo(event.target.result);
