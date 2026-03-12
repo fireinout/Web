@@ -524,8 +524,11 @@
             const channel = new BroadcastChannel('chat_channel');
             channel.onmessage = (event) => {
                 const message = event.data;
-                message.own = false;
-                displayMessage(message, true);
+                // 只顯示來自其他標籤頁的消息，不顯示自己的消息
+                if (!message.own) {
+                    message.own = false;
+                    displayMessage(message, true);
+                }
             };
         } catch (e) {
             console.log('BroadcastChannel 不支持');
