@@ -361,11 +361,10 @@
             };
             
             saveMessage(message);
-            displayMessage(message, true);
             input.value = '';
             input.focus();
             
-            // 廣播到其他標籤頁
+            // 廣播到其他標籤頁（包括自己）
             broadcastMessage(message);
         }
 
@@ -383,7 +382,6 @@
                         own: true
                     };
                     saveMessage(message);
-                    displayMessage(message, true);
                     previewImage(event.target.result);
                     broadcastMessage(message);
                 };
@@ -406,7 +404,6 @@
                         own: true
                     };
                     saveMessage(message);
-                    displayMessage(message, true);
                     previewVideo(event.target.result);
                     broadcastMessage(message);
                 };
@@ -531,16 +528,12 @@
             }
         }
 
-        // 監聽其他標籤頁的消息
+        // 監聽廣播消息（所有人發送的消息都通過這裡顯示）
         try {
             const channel = new BroadcastChannel('chat_channel');
             channel.onmessage = (event) => {
                 const message = event.data;
-                // 只顯示來自其他標籤頁的消息，不顯示自己的消息
-                if (!message.own) {
-                    message.own = false;
-                    displayMessage(message, true);
-                }
+                displayMessage(message, true);
             };
         } catch (e) {
             console.log('BroadcastChannel 不支持');
