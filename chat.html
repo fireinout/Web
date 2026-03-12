@@ -269,7 +269,6 @@
                 <div class="input-buttons">
                     <button class="file-button" onclick="document.getElementById('imageInput').click()">📷 圖片</button>
                     <button class="file-button" onclick="document.getElementById('videoInput').click()">🎬 上傳影片</button>
-                    <button onclick="openVideoDialog()">🔗 影片連結</button>
                     <button class="clear-button" onclick="clearChat()">🗑️ 清空</button>
                 </div>
                 <input type="file" id="imageInput" accept="image/*">
@@ -281,7 +280,7 @@
         <div class="media-panel">
             <div class="media-header">媒體預覽</div>
             <div class="media-content" id="mediaContent">
-                <div class="no-media">👈 在左邊上傳圖片或分享影片連結</div>
+                <div class="no-media">👈 在左邊輸入訊息或上傳圖片</div>
             </div>
         </div>
     </div>
@@ -350,9 +349,14 @@
             
             if (!text) return;
             
+            // 檢測URL
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const urls = text.match(urlRegex);
+            
             const message = {
                 type: 'text',
                 content: text,
+                urls: urls || [],
                 timestamp: new Date(),
                 own: true
             };
@@ -410,23 +414,6 @@
             e.target.value = '';
         });
 
-        // 打開視頻連結對話框
-        function openVideoDialog() {
-            const url = prompt('輸入 YouTube 或其他視頻平台的連結:');
-            if (url) {
-                const message = {
-                    type: 'video-link',
-                    content: url,
-                    timestamp: new Date(),
-                    own: true
-                };
-                saveMessage(message);
-                displayMessage(message, true);
-                previewVideoLink(url);
-                broadcastMessage(message);
-            }
-        }
-
         // 顯示消息
         function displayMessage(message, scroll = false) {
             const messagesDiv = document.getElementById('chatMessages');
@@ -441,6 +428,13 @@
                     <div class="message-content">${content}</div>
                     <div class="message-time">${formatTime(new Date(message.timestamp))}</div>
                 `;
+                
+                // 自動預覽文本中的URL
+                if (message.urls && message.urls.length > 0) {
+                    setTimeout(() => {
+                        previewUrl(message.urls[0]);
+                    }, 100);
+                }
             } else if (message.type === 'image') {
                 html = `
                     <div class="message-content">
@@ -455,13 +449,6 @@
                     </div>
                     <div class="message-time">${formatTime(new Date(message.timestamp))}</div>
                 `;
-            } else if (message.type === 'video-link') {
-                html = `
-                    <div class="message-content">
-                        <a href="${escapeHtml(message.content)}" class="message-video-link" target="_blank">🎬 ${escapeHtml(message.content)}</a>
-                    </div>
-                    <div class="message-time">${formatTime(new Date(message.timestamp))}</div>
-                `;
             }
             
             messageEl.innerHTML = html;
@@ -469,6 +456,33 @@
             
             if (scroll) {
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }
+
+        // 預覽URL (自動識別類型)
+        function previewUrl(url) {
+            const mediaContent = document.getElementById('mediaContent');
+            
+            // 檢測 YouTube
+            if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                const videoId = extractYouTubeId(url);
+                if (videoId) {
+                    mediaContent.innerHTML = `<iframe width="90%" height="90%" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
+                } else {
+                    mediaContent.innerHTML = `<div class="no-media">無法解析視頻連結</div>`;
+                }
+            }
+            // 檢測圖片URL
+            else if (/\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url)) {
+                mediaContent.innerHTML = `<img src="${url}" class="media-image" alt="preview" onerror="this.parentElement.innerHTML='<div class=&quot;no-media&quot;>❌ 無法載入圖片</div>'">`;
+            }
+            // 檢測視頻URL
+            else if (/\.(mp4|webm|ogg|mov|avi)$/i.test(url)) {
+                mediaContent.innerHTML = `<video src="${url}" class="media-video" controls onerror="this.parentElement.innerHTML='<div class=&quot;no-media&quot;>❌ 無法載入影片</div>'"></video>`;
+            }
+            // 其他網址
+            else {
+                mediaContent.innerHTML = `<div class="no-media">📎 連結：<br><a href="${escapeHtml(url)}" target="_blank" style="color: #667eea;">${url}</a></div>`;
             }
         }
 
@@ -482,23 +496,6 @@
         function previewVideo(src) {
             const mediaContent = document.getElementById('mediaContent');
             mediaContent.innerHTML = `<video src="${src}" class="media-video" controls></video>`;
-        }
-
-        // 預覽視頻連結
-        function previewVideoLink(url) {
-            const mediaContent = document.getElementById('mediaContent');
-            
-            // 檢測 YouTube
-            if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                const videoId = extractYouTubeId(url);
-                if (videoId) {
-                    mediaContent.innerHTML = `<iframe width="90%" height="90%" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>`;
-                } else {
-                    mediaContent.innerHTML = `<div class="no-media">無法解析視頻連結</div>`;
-                }
-            } else {
-                mediaContent.innerHTML = `<div class="no-media">⚠️ 目前僅支持 YouTube<br><a href="${url}" target="_blank">${url}</a></div>`;
-            }
         }
 
         // 提取 YouTube 視頻 ID
